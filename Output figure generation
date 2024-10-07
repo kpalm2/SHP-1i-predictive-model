@@ -1,0 +1,161 @@
+Accuracy_model<-Varmodel$Accuracy
+# create an empty data frame with 1000 rows to store the AUC values
+AUC_df <- data.frame(matrix(ncol = 1, nrow = 1000))
+#extract values
+AUC_df <- data.frame(AUC = unlist(lapply(AUC_Res, function(x) x)))
+Accuracy_model_df<-data.frame(Acuraccy = unlist(lapply(Accuracy_model, function(x) x)))
+mean(AUC_df$AUC)
+median(AUC_df$AUC)
+
+AUC_density_plot <- ggplot(AUC_df, aes(x = AUC)) + 
+  geom_density(alpha = .2, fill = "#FF6666") +
+  geom_vline(data = AUC_df, aes(xintercept = mean(AUC), linetype = "mean"), color = "blue") +
+  geom_vline(data = AUC_df, aes(xintercept = median(AUC), linetype = "median"), color = "red") +
+  labs(title = "Trained-model performance accuracy") +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),  # Title font size
+    axis.title.x = element_text(size = 16),               # X-axis label font size
+    axis.title.y = element_text(size = 16),               # Y-axis label font size
+    axis.text.x = element_text(size = 14),                # X-axis tick labels font size
+    axis.text.y = element_text(size = 14)                 # Y-axis tick labels font size
+  )
+
+AUC_density_plot
+
+
+## gather all results tables to combine in "COMBINING PERMUTED RESULTS TABLES"
+table_Res_pred<-list()
+for (i in 1:length(Res_pred)){
+  table<-table(Res_pred[[i]]$cluster, Res_pred[[i]]$predicted_cluster)
+  table_Res_pred[[i]]<-table}
+
+# Extract the 5x5 tables from the list
+table_5x5_list <- lapply(table_Res_pred, function(x) if(all(dim(x) == c(5,5))) x else NULL)
+table_5x5_list <- table_5x5_list[!sapply(table_5x5_list, is.null)]
+
+
+
+##### 6. Combining extracted list into one average table ####
+combined_list<-c(table_5x5_list)
+#combined_list <- c(table_5x5_list,new_4x5_table, new_3x5_table, new_2x5_table, new_1x5_table)
+#combined_list<-c(table_5x5_list,new_4x5_table)
+
+# Combine the 5x5 tables into a single table
+combined_table <- round(Reduce("+", combined_list) / length(combined_list))
+combined_table
+
+# Sum of rows (1x5 table)
+after <- colSums(combined_table)  # Sums of each row
+
+# Sum of columns (1x5 table)
+Before <- rowSums(combined_table)  # Sums of each column
+
+observed <- rbind(Before, after)
+
+# Perform chi-squared test
+chi_squared_test <- chisq.test(observed)
+
+
+##### 7. Plotting results in Alluvial plots #####
+
+df <- as.data.frame.table(combined_table)
+
+#cbPalette <- c("#E41A1C","gold", "#009E73", "#56B4E9","#CC79A7") 
+cbPalette <- c("#D55E00","#F0E442", "#335A30", "#56B4E9","#CC79A7")
+# gold instead of original yellow (#F0E442) so that it is easier to see
+cbPalette_2<- c("#CC79A7","#56B4E9", "#335A30", "#F0E442","#D55E00","#CC79A7","#56B4E9", "#335A30", "#F0E442","#D55E00")
+cbPalette_3<- c("#CC79A7","#56B4E9", "#335A30", "#F0E442","#D55E00","#CC79A7","#56B4E9", "#335A30","#D55E00")
+
+
+library(ggalluvial)
+
+
+p1<-ggplot(df, aes(axis1 = Var1, axis2 = Var2, y = Freq)) +
+  geom_alluvium(aes(fill = Var1), width = 1/8) +
+  geom_stratum(width = 1/8, fill = cbPalette_2, color = "black") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum)), size= 6) +
+  scale_x_discrete(limits = c("Before_treatment", "After_treatment"), expand = c(0.06, 0.06)) +
+  scale_fill_manual(values = cbPalette) + #or scale_fill_brewer(type = "qual", palette = "Set1")
+  guides(fill = "none")+ theme(axis.text.x = element_text(size = 24))+ theme(axis.title.y = element_text(size = 18))+theme(axis.text.y = element_text(size = 18))
+#+ggtitle("Predicted shift of plaque subtypes after Atorvastatin treatment in ECs")+ theme(plot.title = element_text(size = 20))
+p1
+
+##testing signficant differences 
+table<-as.data.frame (as.matrix.data.frame(combined_table))
+table$MV<-table$V3+table$V4
+table$LV<-table$V1+table$V2 + table$V5
+
+MV <- c(2, 3)
+LV <- c(0, 1, 4)
+
+# Sum the counts for MV and LV groups
+grouped_table <- matrix(c(
+  sum(table[MV + 1, MV + 1]), sum(table[MV + 1, LV + 1]),
+  sum(table[LV + 1, MV + 1]), sum(table[LV + 1, LV + 1])
+), nrow = 2)
+
+rownames(grouped_table) <- c("Most vulnerable", "Least vulnerable") #after
+colnames(grouped_table) <- c("Most vulnerable", "Least vulnerable") #before
+
+print("Grouped Contingency Table:")
+print(grouped_table)
+
+mcnemar_test <- mcnemar.test(grouped_table)
+mcnemar_test
+chi_square_test <- chisq.test(grouped_table)
+chi_square_test
+
+cbPalette <- c("#E41A1C","#009E73", "#009E73", "#E41A1C") # gold instead of original yellow (#F0E442) so that it is easier to see
+cbPalette_2<- c("#009E73","#E41A1C", "#009E73", "#E41A1C")
+
+
+df <- as.data.frame.table(grouped_table)
+p2<-ggplot(df, aes(axis1 = Var2, axis2 = Var1, y = Freq)) +
+  geom_alluvium(aes(fill = Var2), width = 1/4) +
+  geom_stratum(width = 1/4, fill = cbPalette_2, color = "black") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum)), size= 7) +
+  scale_x_discrete(limits = c("Before_treatment", "After_treatment"), expand = c(0.13, 0.13)) +
+  scale_fill_manual(values = cbPalette) + #or scale_fill_brewer(type = "qual", palette = "Set1")
+  guides(fill = "none")+ theme(axis.text.x = element_text(size=24))+ theme(axis.title.y = element_text(size = 18))+theme(axis.text.y = element_text(size = 18))
+#+ggtitle("Predicted shift of plaque subtypes after Atorvastatin treatment in ECs")+ theme(plot.title = element_text(size = 20))
+p2
+
+##testing signficant differences 
+table<-as.data.frame (as.matrix.data.frame(combined_table))
+table$MInflamed<-table$V2+table$V4
+table$LInflamed<-table$V1+table$V2
+
+MInflamed <- c(1, 3)
+LInflamed <- c(0, 2)
+
+# Sum the counts for MV and LV groups
+grouped_table_2 <- matrix(c(
+  sum(table[MInflamed + 1, MInflamed + 1]), sum(table[MInflamed + 1, LInflamed + 1]),
+  sum(table[LInflamed + 1, MInflamed + 1]), sum(table[LInflamed + 1, LInflamed + 1])
+), nrow = 2)
+
+rownames(grouped_table_2) <- c("Most_Inflamed", "Least_Inflamed") #after
+colnames(grouped_table_2) <- c("Most_Inflamed", "Least_Inflamed") #before
+
+print("Grouped Contingency Table:")
+print(grouped_table_2)
+
+mcnemar_test <- mcnemar.test(grouped_table_2)
+mcnemar_test
+chi_square_test <- chisq.test(grouped_table_2)
+chi_square_test
+
+cbPalette <- c("#E41A1C","darkorange", "darkorange", "#E41A1C") # gold instead of original yellow (#F0E442) so that it is easier to see
+cbPalette_2<- c("darkorange","#E41A1C", "darkorange", "#E41A1C")
+
+
+df <- as.data.frame.table(grouped_table_2)
+p3<-ggplot(df, aes(axis1 = Var2, axis2 = Var1, y = Freq)) +
+  geom_alluvium(aes(fill = Var2), width = 1/8) +
+  geom_stratum(width = 1/8, fill = cbPalette_2, color = "black") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum)), size = 5) +
+  scale_x_discrete(limits = c("Before_treatment", "After_treatment"), expand = c(0.06, 0.06)) +
+  scale_fill_manual(values = cbPalette) + #or scale_fill_brewer(type = "qual", palette = "Set1")
+  guides(fill = "none")+ theme(axis.text.x = element_text(size = 16))+ theme(axis.title.y = element_text(size = 14))+theme(axis.text.y = element_text(size = 16))
+#+ggtitle("Predicted shift of plaque subtypes after Atorvastatin treatment in ECs")+ theme(plot.title = element_text(size = 20))
+p3
