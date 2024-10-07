@@ -1,0 +1,62 @@
+## for all conditoins except for compound. 
+raw.genecounts_Varf_1<-merge(raw.genecounts_1, variable_feature, by="gene")
+raw.genecounts_Varf_2<-merge(raw.genecounts_Varf_1, table, by="gene")
+
+
+## preparing dataframe with selected genes 
+CCgenes<-raw.genecounts_Varf_2$gene
+CCgenes<-as.data.frame(CCgenes)
+names(CCgenes)[names(CCgenes) == "CCgenes"] <- "gene"
+CCgenes_select<-merge(raw.genecounts_1, CCgenes, by="gene")
+
+#filtering genes from culture data in Bulk RNA
+#data should have genes as variables and patients as rows
+data<-CCgenes_select
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+#patients as rows and genes in columns
+data<-t(data)
+data<-as.data.frame(data)
+
+index_numbers <-ncol(data) #to automatically create index for number of selected genes per condition
+
+##remove lowly expressed genes
+gene_totals <- rowSums(data[1:index_numbers]) 
+# Create a logical vector for genes with total RNA counts >= 10
+mask <- gene_totals >= 10
+# Apply the mask to filter out genes with total RNA counts < 10
+data <- data[mask, ]
+data<-rownames_to_column(data, var="study_number")
+data<-merge(data, Clusters, by="study_number") ### original is Clusters
+outcome<-data$cluster
+outcome<-as.data.frame(outcome)
+outcome$outcome<-as.factor(outcome$outcome)
+
+index_numbers_2<-ncol(data)-1 #to automatically create index for number of selected genes per condition
+
+#list of genes after removing lowly expressed genes
+selectedgenes<-colnames(data)[2:index_numbers_2]
+
+#predict with new data (after in-silico treatment)
+selectedgenes<-as.data.frame(selectedgenes)
+names(selectedgenes)[names(selectedgenes) == "selectedgenes"] <- "gene"
+
+
+
+##make dataframe with only patients expression data
+Exp<-merge(CCgenes_select, selectedgenes, by="gene")
+selectFC<-merge(raw.genecounts_Varf_2, selectedgenes, by="gene") ###DONT FORGET TO CHNAGE IT HERE
+FC<-selectFC[,names(selectFC)%in% c("gene", "FoldChange")]
+rownames(Exp)<-Exp[,1]
+Exp<-Exp[,-1]
+
+
+###creating perturbed treatment data set (insilico)
+#multiplication applied (if u wanna randomize change Foldchange to FoldchangeR)
+ExpNew<-as.data.frame(Exp %>%
+                        mutate_all(.,function(col){FC$FoldChange*col}))
+#patient IDs as rowns in ExpNew
+ExpNew<-t(ExpNew)
+ExpNew<-as.data.frame(ExpNew)
+ExpNew<-rownames_to_column(ExpNew, var = "study_number")
