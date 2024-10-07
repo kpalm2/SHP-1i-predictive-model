@@ -1,0 +1,96 @@
+##permute test and train data
+library(progress)
+library(pROC)
+library(caret)
+library(glmnet)
+library(randomForest)
+library(EnsDb.Hsapiens.v86)
+
+##data prep and creation of empty lists for storage
+set.seed(123)
+index_Perm <- createDataPartition(y = data$cluster,  p = 0.8, times = 1000, list = TRUE)
+n_permutations<-1000
+pb <- progress_bar$new(total = n_permutations, format = "[:bar] :percent eta: :eta")
+Confusionres<- list()
+AUC_Res<-list()
+Features<-list()
+Res_pred<-list()
+Accuracy_model<-list()
+Pred_model<-list()
+selected_genes<-list()
+#predictions<- list()
+
+
+##loop N=1000
+for (i in 1:length(index_Perm)) {
+  #run permutation indexes into training and testdata
+  library(caret)
+  set.seed(123) 
+  train_data <- data[index_Perm[[i]], ]
+  test_data <- data[-index_Perm[[i]], ]
+  Traincluster<-train_data$cluster
+  Testcluster<- test_data$cluster
+  
+  #remove cluster variable from train and test data
+  train_data <- train_data[, -which(names(train_data) == "cluster")]
+  test_data <- test_data[, -which(names(test_data) == "cluster")]
+
+  Lasso <- cv.glmnet(as.matrix(train_data[, -1]), Traincluster, alpha = 1, family = "multinomial")
+  Features[[i]]<-Lasso ##STORE FEATURE SELECTIONS
+  
+
+  #select features based on best Lambda
+  best_lambda <- Lasso$lambda.min
+  
+  # Extract coefficients for the optimal lambda
+  coefficients <- coef(Lasso, s = best_lambda)
+  
+  all_selected_features <- unique(unlist(lapply(coefficients, function(x) which(x[-1, ] != 0))))
+  
+  train_data_selected <- cbind(Traincluster, train_data[, all_selected_features]) #editing df to contain only selected features
+  test_data_selected <- cbind(Testcluster, test_data[, all_selected_features])#editing df to contain only selected features
+  
+  symbols_features<-as.data.frame(names(train_data_selected)[grep("^ENSG", names(train_data_selected))])
+  colnames(symbols_features)<-c("gene")
+  
+  symbols_features <- ensembldb::select(EnsDb.Hsapiens.v86, keys = symbols_features$gene, keytype = "GENEID", columns = "SYMBOL")
+  selected_genes[[i]]<-symbols_features
+  
+  ###turn on Model that you want to use to train !!!!
+  Fitmodel <- randomForest(factor(Traincluster) ~ ., data =  train_data_selected[,-(1:2)],replace= F, ntree=100, mtry=8, importance=TRUE, proximity= TRUE)   #random forrest
+  Pred_model[[i]]<-Fitmodel
+  
+  ###RANDOM FORREST FIT Model
+  predictions_test <- predict(Fitmodel, newdata = test_data_selected[,-(1:2)])
+  test_data_selected<-as.data.frame(test_data_selected)
+  confusion_matrix <- table(predictions_test, test_data_selected$Testcluster)
+  #confusionMatrix(df$test_data_selected.Testcluster, df$predictions_test)
+  
+  df<-data.frame( test_data_selected$Testcluster, predictions_test)
+  # Calculate accuracy
+  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+  #print(paste("Accuracy:", round(accuracy, 4)))
+  AUC_Res[[i]]<-auc(multiclass.roc(as.numeric(test_data_selected$Testcluster), as.numeric(predictions_test)))
+  #save accuracy for each model
+  Accuracy_model[[i]]<-accuracy
+  
+  #making prediction with new data
+  pred_ExpNew<-predict(Fitmodel, newdata = ExpNew, type = "class")
+  
+  res<-as.data.frame(pred_ExpNew)
+  names(res)[names(res) == "pred_ExpNew"] <- "predicted_cluster"
+  res$pred_ExpNew<-as.factor(res$predicted_cluster)
+  
+  patientIds<-ExpNew$study_number
+  patientIds<-as.data.frame(patientIds)
+  rownames(res)<-patientIds[,1]
+  res<-rownames_to_column(res, var = "study_number")
+  
+  library(dplyr)
+  before<-dplyr::select(raw.genecounts_Cluster, "study_number", "cluster")
+  Result<-merge(before, res, by="study_number")
+  Res_pred[[i]]<-Result
+
+  # update progress bar
+  pb$tick()
+}
