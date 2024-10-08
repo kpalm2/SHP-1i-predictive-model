@@ -1,4 +1,3 @@
-##permute test and train data
 library(progress)
 library(pROC)
 library(caret)
@@ -38,7 +37,6 @@ for (i in 1:length(index_Perm)) {
   Lasso <- cv.glmnet(as.matrix(train_data[, -1]), Traincluster, alpha = 1, family = "multinomial")
   Features[[i]]<-Lasso ##STORE FEATURE SELECTIONS
   
-
   #select features based on best Lambda
   best_lambda <- Lasso$lambda.min
   
