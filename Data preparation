@@ -1,5 +1,5 @@
-## for all conditoins except for compound. 
-raw.genecounts_Varf_1<-merge(raw.genecounts_1, variable_feature, by="gene")
+## Filter out DEgs with FDR>0.05 and genes not included in plaque defining genes 
+raw.genecounts_Varf_1<-merge(raw.genecounts_1, plaque_defining, by="gene")
 raw.genecounts_Varf_2<-merge(raw.genecounts_Varf_1, table, by="gene")
 
 
@@ -44,7 +44,7 @@ names(selectedgenes)[names(selectedgenes) == "selectedgenes"] <- "gene"
 
 
 
-##make dataframe with only patients expression data
+##Making Before treatment dataset 
 Exp<-merge(CCgenes_select, selectedgenes, by="gene")
 selectFC<-merge(raw.genecounts_Varf_2, selectedgenes, by="gene") ###DONT FORGET TO CHNAGE IT HERE
 FC<-selectFC[,names(selectFC)%in% c("gene", "FoldChange")]
