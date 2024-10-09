@@ -2,6 +2,18 @@
 
 This R script implements the SHP-1i in-silico treatment predictive model using a Random Forest multi-class classification approach.
 
+Libraries used:
+progress 1.2.3
+pROC 1.18.5
+caret 6.0-94
+glmnet 4.1-8
+randomForest 4.7-1.1
+EnsDb.Hsapiens.v86 2.99.0
+biomaRT 2.60.1
+ggalluvial 0.12.5
+limma 3.60.4
+ggplot2 3.5.1
+
 ## Getting Started
 
 Before initiating the predictive Random Forest model loop, two main dataframes need to be prepared:
