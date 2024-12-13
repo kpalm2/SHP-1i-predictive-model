@@ -1,6 +1,12 @@
 # SHP-1i Predictive Model Using Random Forest
 
-This R script implements the SHP-1i in-silico treatment predictive model using a Random Forest multi-class classification approach.
+This R script implements the SHP-1i in-silico treatment predictive model using a Random Forest multi-class classification approach (see flow-chart).
+
+To do this, we projected 119 differentially expressed genes, selected via lasso feature selection, that occur in human macrophages following in-vitro SHP-1i onto data from 654 human plaque samples. The processed data was divided into 1000 randomly partitioned subsets, with each subset split into 80% training and 20% testing sets to predict plaque subtypes based on predicted transcriptomic changes and overcome overfitting. The resulting trained models were then evaluated using multiclass area under the ROC curve (AUC), with an average AUC of 80% or higher considered indicative of an average well performing model. From these models, an averaged output from 1000 iterations was generated, revealing predicted changes in plaque classification after SHP-1i in-silico treatment. 
+
+**Flow chart methods**
+![image](https://github.com/user-attachments/assets/f5f29c54-472c-4856-8179-0c7364f60e23)
+
 
 Libraries used:
 progress 1.2.3,
