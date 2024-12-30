@@ -6,16 +6,18 @@ raw.genecounts_Varf_1 <- merge(raw.genecounts_1, plaque_defining, by = "gene")
 raw.genecounts_Varf_2 <- merge(raw.genecounts_Varf_1, table, by = "gene") 
 
 
-### Preparing before treatment dataframe with patient as rows and genes as column ###
+### Preparing before treatment dataframe with N selected genes from in-vitro experiment
 
-##selecting genes ##
+#patient as rows and genes as column 
+##Identifying complete list of genes from transcriptomic data ##
+
 CCgenes<-raw.genecounts_Varf_2$gene # saving selected genes in object CCgenes
 CCgenes<-as.data.frame(CCgenes)
 names(CCgenes)[names(CCgenes) == "CCgenes"] <- "gene"
 CCgenes_select<-merge(raw.genecounts_1, CCgenes, by="gene")
 
 #filtering genes from in-vitro experiment data in Bulk RNA
-#data should have genes as variables and patients as rows
+#Here dataframe reffered to as "data" should have DESeq2 derived genes and foldchanges from in-vitro experiment in columns and patients as rows
 data<-CCgenes_select
 rownames(data)<-data[,1]
 data<-data[,-1]
@@ -45,19 +47,16 @@ selectedgenes<-colnames(data)[2:index_numbers_2]
 selectedgenes<-as.data.frame(selectedgenes)
 names(selectedgenes)[names(selectedgenes) == "selectedgenes"] <- "gene"
 
-
-
 ##Creating  Before treatment dataset (Exp) ##
 Exp<-merge(CCgenes_select, selectedgenes, by="gene")
-selectFC<-merge(raw.genecounts_Varf_2, selectedgenes, by="gene") ###DONT FORGET TO CHNAGE IT HERE
+selectFC<-merge(raw.genecounts_Varf_2, selectedgenes, by="gene")
 FC<-selectFC[,names(selectFC)%in% c("gene", "FoldChange")]
 rownames(Exp)<-Exp[,1]
 Exp<-Exp[,-1]
 
-
-##Creating After treatmet dataset (insilico) ##
+##Creating After treatmet dataset (in-silico) ##
 ExpNew<-as.data.frame(Exp %>%
-                        mutate_all(.,function(col){FC$FoldChange*col}))
+                        mutate_all(.,function(col){FC$FoldChange*col})) #projecting fold changes from in-vitro experiment onto transcriptomic data
 #patient IDs as rowns in ExpNew
 ExpNew<-t(ExpNew)
 ExpNew<-as.data.frame(ExpNew)
