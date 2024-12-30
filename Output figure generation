@@ -5,7 +5,7 @@ AUC_df <- data.frame(matrix(ncol = 1, nrow = 1000))
 AUC_df <- data.frame(AUC = unlist(lapply(AUC_Res, function(x) x)))
 Accuracy_model_df<-data.frame(Acuraccy = unlist(lapply(Accuracy_model, function(x) x)))
 
-##AUC density plot 
+##AUC density plot to assess average model performance. an average performance of 75% or higher is concidered a strong performing model after 1000 iterations
 AUC_density_plot <- ggplot(AUC_df, aes(x = AUC)) + 
   geom_density(alpha = .2, fill = "#FF6666") +
   geom_vline(data = AUC_df, aes(xintercept = mean(AUC), linetype = "mean"), color = "blue") +
@@ -42,10 +42,10 @@ after <- colSums(combined_table)  # Sums of each row
 Before <- rowSums(combined_table)  # Sums of each column
 observed <- rbind(Before, after)
 
-# Perform chi-squared test
+# Perform chi-squared test to assess if there are any signficant differences in the proportions of plaque subtypes before and after in-silico treatment.
 chi_squared_test <- chisq.test(observed)
 
-##plotting results in Alluvial plots ##
+##plotting results in Alluvial plot for plaque subtype specific changes##
 
 df <- as.data.frame.table(combined_table)
 #color palletes for plot
@@ -81,11 +81,9 @@ colnames(grouped_table) <- c("Most vulnerable", "Least vulnerable") #before
 print("Grouped Contingency Table:")
 print(grouped_table)
 
+#McNemar's test is a statistical test for pared data comparing frequency of Most vulnerable plaque and least vulnerable plaques after in-silico treatment 
 mcnemar_test <- mcnemar.test(grouped_table)
 mcnemar_test
-chi_square_test <- chisq.test(grouped_table)
-chi_square_test
-
 
 ##plotting results in Alluvial plots for simpler grouping ##
 cbPalette <- c("#E41A1C","#009E73", "#009E73", "#E41A1C") 
