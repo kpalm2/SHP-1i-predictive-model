@@ -4,6 +4,7 @@ library(caret)
 library(glmnet)
 library(randomForest)
 library(EnsDb.Hsapiens.v86)
+library(dplyr)
 
 ##data prep and creation of empty lists for storage
 set.seed(123)
@@ -52,29 +53,26 @@ for (i in 1:length(index_Perm)) {
   colnames(symbols_features)<-c("gene")
   
   symbols_features <- ensembldb::select(EnsDb.Hsapiens.v86, keys = symbols_features$gene, keytype = "GENEID", columns = "SYMBOL")
-  selected_genes[[i]]<-symbols_features
+  selected_genes[[i]]<-symbols_features #storing features with ENSEMBLE IDs
   
-  ###turn on Model that you want to use to train !!!!
+  ###Start training of Random forest multi-class classification model
   Fitmodel <- randomForest(factor(Traincluster) ~ ., data =  train_data_selected[,-(1:2)],replace= F, ntree=100, mtry=8, importance=TRUE, proximity= TRUE)   #random forrest
   Pred_model[[i]]<-Fitmodel
-  
-  ###RANDOM FORREST FIT Model
+
+  ##Testing trained model with testing subset 
   predictions_test <- predict(Fitmodel, newdata = test_data_selected[,-(1:2)])
   test_data_selected<-as.data.frame(test_data_selected)
   confusion_matrix <- table(predictions_test, test_data_selected$Testcluster)
-  #confusionMatrix(df$test_data_selected.Testcluster, df$predictions_test)
-  
+ 
   df<-data.frame( test_data_selected$Testcluster, predictions_test)
-  # Calculate accuracy
-  accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-  #print(paste("Accuracy:", round(accuracy, 4)))
+  
+  ## Assesing model accuracy with AUC ROC score and store results
   AUC_Res[[i]]<-auc(multiclass.roc(as.numeric(test_data_selected$Testcluster), as.numeric(predictions_test)))
-  #save accuracy for each model
-  Accuracy_model[[i]]<-accuracy
   
-  #making prediction with new data
+  ##making prediction with pertubred data (after in-silico treatment "ExpNew")
   pred_ExpNew<-predict(Fitmodel, newdata = ExpNew, type = "class")
-  
+
+  ##storing prediction results after in-silico treatment 
   res<-as.data.frame(pred_ExpNew)
   names(res)[names(res) == "pred_ExpNew"] <- "predicted_cluster"
   res$pred_ExpNew<-as.factor(res$predicted_cluster)
@@ -84,7 +82,6 @@ for (i in 1:length(index_Perm)) {
   rownames(res)<-patientIds[,1]
   res<-rownames_to_column(res, var = "study_number")
   
-  library(dplyr)
   before<-dplyr::select(raw.genecounts_Cluster, "study_number", "cluster")
   Result<-merge(before, res, by="study_number")
   Res_pred[[i]]<-Result
