@@ -5,7 +5,9 @@ This R script implements the SHP-1i in-silico treatment predictive model using a
 To do this, we projected DESeq2 derived 119 differentially expressed genes (FDR<0.1), further selected via lasso feature selection, that occur in human macrophages following in-vitro SHP-1i onto data from 654 human plaque samples. The processed data was divided into 1000 randomly partitioned subsets, with each subset split into 80% training and 20% testing sets to predict plaque subtypes based on predicted transcriptomic changes and to overcome overfitting. The resulting trained models were then evaluated using multiclass area under the ROC curve (AUC), with an average AUC of 80% or higher considered indicative of a well performing model. From these models, an averaged output from 1000 iterations was generated, revealing predicted changes in plaque classification after SHP-1i in-silico treatment. Significant predicted shifts in plaque phenotypes after in-silico treatment were determined using Chi-sqaured test or the McNemar's chi-squared test with p<0.05 considered significant. Favorable shift ratios were manually calculated by dividing the number of least vulnerable plaques after in-silico treatment by the number of most vulnerable plaques after in-silico treatment
 
 **Flow chart methods**
-tbd
+zoomed out flow-chart TBA
+training flow chart TBA
+Minimal gene seleciton graph TBA
 
 
 
