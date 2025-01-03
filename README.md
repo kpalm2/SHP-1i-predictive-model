@@ -69,6 +69,7 @@ This dataframe represents data after simulated (in-silico) treatment. It will be
    $$
 
    Standard error and 95% CI for log odds ratio
+   
    $$
    \text{SE}_{\log(\text{OR})} = \sqrt{\frac{1}{a} + \frac{1}{b}}
    $$
