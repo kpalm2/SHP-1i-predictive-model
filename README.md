@@ -56,7 +56,33 @@ This dataframe represents data after simulated (in-silico) treatment. It will be
    The model is trained and tested using the 'Before Treatment DataFrame.' Model performance is evaluated using the Area Under the Curve (AUC), and the predicted plaque subtype is calculated by feeding the trained model with the 'After In-Silico Treatment DataFrame.' The Random Forest prediction model is performed 1000 times, with each iteration utilizing a different subset of the patient population created using `createDataPartition(y=..., p=0.80, times = 1000, list = TRUE)`. This results in a final output that represents the average prediction over 1000 separate models.
 
 6. **Statistical analysis of results**:
-   Differences in the proportion of plaque subtype before and after in-silico treatment were assessed using Chi-sqaured test, with p-value<0.05 concidered signifciant. More specific differences between simplified grouping "more vulnerable" or "less vulnerable" plaques were determined using McNemar's chi-squared test, with p-value<0.05 concidered signficant. 
+   Differences in the proportion of plaque subtype before and after in-silico treatment were assessed using Chi-sqaured test, with p-value<0.05 concidered signifciant. Differences between simplified grouping "more vulnerable" or "less vulnerable" plaques were determined using McNemar's chi-squared test, with p-value<0.05 concidered signficant.
+
+  **Formulas used to calculate Odds ratios and corresponding upper and lower CIs**
+
+   # Odds ratio
+   a= No. less vulnerable plaques after in-silico treatment
+   b= No. more vulnerable plaques  after in-silico treatment
+   $$
+   \text{Odds Ratio} = \frac{a}{b}
+   $$
+
+   # Standard error and 95% CI for log odds ratio
+   $$
+   \text{SE}_{\log(\text{OR})} = \sqrt{\frac{1}{a} + \frac{1}{b}}
+   $$
+
+   $$
+   \log(\text{OR}) = \log(\text{Odds Ratio})
+   $$
+   
+   $$
+   \text{Lower CI} = \exp(\log(\text{OR}) - 1.96 \times \text{SE}_{\log(\text{OR})})
+   $$
+   
+   $$
+   \text{Upper CI} = \exp(\log(\text{OR}) + 1.96 \times \text{SE}_{\log(\text{OR})})
+   $$
 
 # Example Output
 
