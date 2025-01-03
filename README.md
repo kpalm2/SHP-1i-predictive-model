@@ -63,6 +63,7 @@ This dataframe represents data after simulated (in-silico) treatment. It will be
    Odds ratio
    a= No. less vulnerable plaques after in-silico treatment
    b= No. more vulnerable plaques  after in-silico treatment
+   
    $$
    \text{Odds Ratio} = \frac{a}{b}
    $$
