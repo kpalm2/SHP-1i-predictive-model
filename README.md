@@ -60,14 +60,14 @@ This dataframe represents data after simulated (in-silico) treatment. It will be
 
   **Formulas used to calculate Odds ratios and corresponding upper and lower CIs**
 
-   # Odds ratio
+   Odds ratio
    a= No. less vulnerable plaques after in-silico treatment
    b= No. more vulnerable plaques  after in-silico treatment
    $$
    \text{Odds Ratio} = \frac{a}{b}
    $$
 
-   # Standard error and 95% CI for log odds ratio
+   Standard error and 95% CI for log odds ratio
    $$
    \text{SE}_{\log(\text{OR})} = \sqrt{\frac{1}{a} + \frac{1}{b}}
    $$
