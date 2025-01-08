@@ -86,7 +86,7 @@ This dataframe represents data after simulated (in-silico) treatment. It will be
    \text{Upper CI} = \exp(\log(\text{OR}) + 1.96 \times \text{SE}_{\log(\text{OR})})
    $$
 
-# Example Output
+# RF Output
 
 ![image](https://github.com/user-attachments/assets/3faa77ec-978b-4137-af16-4f63c2fe438e)
 
