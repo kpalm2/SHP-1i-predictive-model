@@ -89,3 +89,25 @@ for (i in 1:length(index_Perm)) {
   # update progress bar
   pb$tick()
 }
+
+
+###Assesing model performance with AUC score ###
+### create an empty dataframe with 1000 rows to store the AUC values
+AUC_df <- data.frame(matrix(ncol = 1, nrow = 1000))
+AUC_df <- data.frame(AUC = unlist(lapply(AUC_Res, function(x) x)))
+Accuracy_model_df<-data.frame(Acuraccy = unlist(lapply(Accuracy_model, function(x) x)))
+
+##AUC density plot to assess average model performance. an average performance of 75% or higher is concidered a strong performing model after 1000 iterations
+AUC_density_plot <- ggplot(AUC_df, aes(x = AUC)) + 
+  geom_density(alpha = .2, fill = "#FF6666") +
+  geom_vline(data = AUC_df, aes(xintercept = mean(AUC), linetype = "mean"), color = "blue") +
+  geom_vline(data = AUC_df, aes(xintercept = median(AUC), linetype = "median"), color = "red") +
+  labs(title = "Trained-model performance accuracy") +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),  # Title font size
+    axis.title.x = element_text(size = 16),               # X-axis label font size
+    axis.title.y = element_text(size = 16),               # Y-axis label font size
+    axis.text.x = element_text(size = 14),                # X-axis tick labels font size
+    axis.text.y = element_text(size = 14)                 # Y-axis tick labels font size
+  )
+AUC_density_plot
