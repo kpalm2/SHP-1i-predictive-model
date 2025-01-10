@@ -20,7 +20,7 @@ dplyr 1.1.4
 
 Figure 1 Overview of model building 
 ![VAR flow chart-4](https://github.com/user-attachments/assets/0cf59108-5537-429f-95d7-3ff7deebbc78)
-
+Numbered boxes indicate corresponding phase in step-by-step description. 
 
 ## Getting started: step by step description 
 Before initiating the predictive Random Forest model loop, two main dataframes need to be prepared:
