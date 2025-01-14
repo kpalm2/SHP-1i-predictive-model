@@ -42,7 +42,7 @@ This data frame represents data after simulated (in-silico) treatment. It will b
    The raw bulk RNA dataset is loaded (with patients as rows and genes as columns), scaled, and quantile normalized using the 'limma' package and transposed 
 
 2. **Load in-vitro cell drug treatment data**:  
-  The in-vitro cell drug treatment expression data (for the drug of interest or controls) is loaded and saved in a table with the following variables: 'gene' (ENSG), 'symbol', and 'FoldChange'. Genes that are not differentially expressed after treatment (FRD>0.1) are filtered out. The variable 'FoldChange' is created by transforming the existing log2 fold change values using the formula:
+  The in-vitro cell drug treatment expression data (for the drug of interest or controls) is loaded and saved in a table with the following variables: **`gene`** (ENSG), **`symbol`**, and **`FoldChange`**. Genes that are not differentially expressed after treatment (FRD>0.1) are filtered out. The variable **`FoldChange`** is created by transforming the existing log2 fold change values using the formula:
    
    $$
    \text{FoldChange} = 2^{\text{log fold change}}
@@ -57,7 +57,7 @@ This data frame represents data after simulated (in-silico) treatment. It will b
 ## RF model building and performance evaluation (script 2)
 
 5. **Initialize RF Prediction model loop**:  
-   The RF model is trained and tested using the 'Before Treatment DataFrame' (See Figure 2). Model performance is evaluated using the Area Under the Curve (AUC), and the predicted plaque subtype is calculated by feeding the trained RF model with the 'After In-Silico Treatment DataFrame.' To overcome overfitting, the RF prediction model is performed 1,000 times, with each iteration utilizing a different subset of the patient population created using createDataPartition(y=..., p=0.80, times = 1000, list = TRUE). This results in a final output that represents the average prediction over 1,000 separate models. 
+   The RF model is trained and tested using the 'Before Treatment DataFrame' (See Figure 2). Model performance is evaluated using the Area Under the Curve (AUC), and the predicted plaque subtype is calculated by feeding the trained RF model with the **`After In-Silico Treatment DataFrame.`** To overcome overfitting, the RF prediction model is performed 1,000 times, with each iteration utilizing a different subset of the patient population created using createDataPartition(y=..., p=0.80, times = 1000, list = TRUE). This results in a final output that represents the average prediction over 1,000 separate models. 
  
 
 Figure 2: Zoomed-in overview of model building and performance evaluation 
