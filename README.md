@@ -4,10 +4,11 @@
 This R script implements the SHP-1i in-silico treatment predictive model using a Random Forest (RF) multi-class classification approach (see Figure 1). 
 To develop this model, we first identified 121 differentially expressed genes (DEGs, FDR < 0.1) in human macrophages following in-vitro SHP-1i treatment. During model construction, these genes were then narrowed down to 119 through LASSO feature selection. Using the original, unaltered expression data for these 119 genes from 654 human plaque samples, we trained a random forest classification model to predict plaque subtypes. The data was partitioned into 1,000 randomly generated subsets, each split into 80% training and 20% testing sets. RF model performance was evaluated using multiclass area under the ROC curve (AUC), with an average AUC of 75% or higher considered indicative of a well performing model.  
 
-To simulate in-silico treatment of SHP-1i, the expression changes of the same 119 DESeq2-derived, LASSO-selected DEGs were projected onto the 654 human plaque samples. This was achieved by multiplying the expression values by the antilogarithmic transformed fold changes, resulting in a “perturbed” dataset (rows as patients and columns as genes). The trained predictive model was then applied to classify the perturbed dataset, and and these classifications were used to quantify the effects of the in-silico SHP-1i treatment. After 1,000 iterations,  an averaged output was generated, revealing predicted changes in plaque classification after SHP-1i in-silico treatment.   
+To simulate in-silico treatment of SHP-1i, the expression changes of the same 119 DESeq2-derived, LASSO-selected DEGs were projected onto the 654 human plaque samples. This was achieved by multiplying the expression values by the antilogarithmic transformed fold changes, resulting in a “perturbed” dataset (with patients as rows and genes as columns). The trained predictive model was then applied to classify the perturbed dataset, and these classifications were used to quantify the effects of the in-silico SHP-1i treatment. After 1,000 iterations,  an averaged output was generated, revealing predicted changes in plaque classification after SHP-1i in-silico treatment.   
 
 The shifts in plaque subtypes following this projection were assessed for statistical significance using McNemar’s test, which evaluates paired data to determine whether the observed shifts (e.g., from more vulnerable to less vulnerable plaques) are meaningful. To further the interpret results, odds ratios (ORs) were calculated by dividing the number of plaques predicted to shift favorably (e.g., transitioning from more vulnerable to less vulnerable subtypes) by the number of plaques predicted to shift unfavorably (e.g., transitioning from less vulnerable to more vulnerable subtypes). Corresponding confidence intervals were calculated using standard formulas and p-values were derived from McNemar's Chi-squared test. 
 
+ 
 Libraries used:
 progress 1.2.3,
 pROC 1.18.5,
@@ -29,19 +30,19 @@ Numbered boxes indicate corresponding phase in step-by-step description.
 Before initiating the predictive Random Forest model loop, two main dataframes need to be prepared:
 
 ### 1. Before treatment data frame 
-This data frame will be used to **train and test** the RF model. It contains the original normalized bulk RNA expression of the patient population, which will help the model learn patterns to predict outcomes. Additionally, it includes the known plaque subtype for each patient.
+This data frame will be used to **train and test** the RF model. It contains the original normalized bulk RNA expression of the patient population, which will be used to train the mode. Additionally, it includes the known plaque subtype for each patient. 
 
 ### 2. After in-silico treatment data frame
-This data frame represents data after simulated (in-silico) treatment. It will be **fed into the trained Random Forest model** to make treatment predictions based on the learned patterns from the training phase. It **does not** contain any plaque subtype information.
+This data frame represents data after simulated (in-silico) treatment. It will be **fed into the trained RF model** to make treatment predictions based on the learned patterns from the training phase. It **does not** contain any plaque subtype information. 
 
 
 ## Steps to prepare data frames (script 1)
 
 1. **Load and normalize data**:  
-   The raw bulk RNA dataset is loaded, scaled, and quantile normalized using the `limma` package (with patients as rows and genes as columns).
+   The raw bulk RNA dataset is loaded (with patients as rows and genes as columns), scaled, and quantile normalized using the 'limma' package and transposed 
 
 2. **Load in-vitro cell drug treatment data**:  
-   The in-vitro cell drug treatment expression data (for the drug of interest or controls) is loaded and saved in a table with the following variables: `gene` (ENSG), `symbol`, and `FoldChange`. Genes that are not differentially expressed after treatment (FRD>0.1) are filtered out. The variable `FoldChange` is created by transforming the existing log fold change values using the formula:
+  The in-vitro cell drug treatment expression data (for the drug of interest or controls) is loaded and saved in a table with the following variables: 'gene' (ENSG), 'symbol', and 'FoldChange'. Genes that are not differentially expressed after treatment (FRD>0.1) are filtered out. The variable 'FoldChange' is created by transforming the existing log2 fold change values using the formula:
    
    $$
    \text{FoldChange} = 2^{\text{log fold change}}
@@ -51,22 +52,23 @@ This data frame represents data after simulated (in-silico) treatment. It will b
    The normalized bulk RNA data frame is filtered for plaque subtype-defining genes (No. = 5,000) and genes that were differentially expressed after the in-vitro drug experiment (FDR < 0.1). Additionally, genes with low counts (count <= 10) are excluded.
 
 4. **Create after in-silico treatment data frame**:  
-   The in-silico treatment data frame is created by multiplying the expression values from the 'Before Treatment DataFrame' with the corresponding gene 'FoldChange' values from the in-vitro drug experiment table.
+   The in-silico treatment data frame is created by multiplying the expression values from the 'Before Treatment DataFrame' with the corresponding gene ‘FoldChange’ values from the in-vitro drug experiment table. 
 
 ## RF model building and performance evaluation (script 2)
 
 5. **Initialize RF Prediction model loop**:  
-   The RF model is trained and tested using the 'Before Treatment DataFrame' (See Figure 2). Model performance is evaluated using the Area Under the Curve (AUC), and the predicted plaque subtype is calculated by feeding the trained RF model with the 'After In-Silico Treatment DataFrame.' To overcome overfitting, the RF prediction model is performed 1,000 times, with each iteration utilizing a different subset of the patient population created using `createDataPartition(y=..., p=0.80, times = 1000, list = TRUE)`. This results in a final output that represents the average prediction over 1,000 separate models.
+   The RF model is trained and tested using the 'Before Treatment DataFrame' (See Figure 2). Model performance is evaluated using the Area Under the Curve (AUC), and the predicted plaque subtype is calculated by feeding the trained RF model with the 'After In-Silico Treatment DataFrame.' To overcome overfitting, the RF prediction model is performed 1,000 times, with each iteration utilizing a different subset of the patient population created using createDataPartition(y=..., p=0.80, times = 1000, list = TRUE). This results in a final output that represents the average prediction over 1,000 separate models. 
+ 
 
 Figure 2: Zoomed-in overview of model building and performance evaluation 
 ![Var model building and QC-5](https://github.com/user-attachments/assets/b393c3b8-ef53-4794-8484-aece84a58182)
 
 ## Model results & visualization (script 3)
-6. Differences in the proportion of plaque subtype before and after in-silico treatment were assessed using Chi-sqaured test, with p-value<0.05 concidered signifciant. Differences between simplified grouping "more vulnerable" or "less vulnerable" plaques were determined using McNemar's chi-squared test, with p-value<0.05 concidered signficant. Model results were visualized in an alluvial plot using ggalluvial() R function.  
+6. Differences in the proportion of plaque subtype before and after in-silico treatment were assessed using Chi-squared test, with p-value<0.05 considered significant. Differences between aggregated grouping "more vulnerable" or "less vulnerable" plaques were determined using McNemar's chi-squared test, with p-value<0.05 considered significant. Model results were visualized in an alluvial plot using ggalluvial() R function.   
 
 Formulas used to calculate Odds ratios and corresponding upper and lower CIs:
-   a= No. less vulnerable plaques after in-silico treatment
-   b= No. more vulnerable plaques  after in-silico treatment
+   a= No. shifted less vulnerable plaques after in-silico treatment  
+   b= No. shifted more vulnerable plaques after in-silico treatment
    
    $$
    \text{Odds Ratio} = \frac{a}{b}
